@@ -12,14 +12,23 @@ gradle/wrapper/gradle-wrapper.jar
 .settings/
 .classpath
 .project
+.vscode/
 bin/
+out/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Mod
+# Mod run directories
 run/
+runs/
 logs/
+crash-reports/
+
+# Mod build/output
 src/generated/
 repo/
+output/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
