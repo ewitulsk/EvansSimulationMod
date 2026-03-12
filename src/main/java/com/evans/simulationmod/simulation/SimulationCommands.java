@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -39,13 +40,15 @@ public class SimulationCommands {
         ServerLevel level = source.getServer().overworld();
         SimulationManager manager = SimulationManager.get(level);
 
-        ChunkPos center = new ChunkPos(x, z);
+        int chunkX = SectionPos.blockToSectionCoord(x);
+        int chunkZ = SectionPos.blockToSectionCoord(z);
+        ChunkPos center = new ChunkPos(chunkX, chunkZ);
         SimulationRegion region = new SimulationRegion(center, radius);
         manager.setRegion(region);
 
         source.sendSuccess(() -> Component.literal(
-                String.format("Simulation region created at (%d, %d) with radius %d (%d chunks)",
-                        x, z, radius, region.getChunkCount())
+                String.format("Simulation region created at block (%d, %d) [chunk (%d, %d)] with radius %d (%d chunks)",
+                        x, z, chunkX, chunkZ, radius, region.getChunkCount())
         ), true);
 
         return 1;
@@ -59,11 +62,29 @@ public class SimulationCommands {
         if (region == null) {
             source.sendSuccess(() -> Component.literal("No active simulation region."), false);
         } else {
+            int cached = manager.getChunkCacheManager().getCachedChunkCount();
+            int pending = manager.getPendingChangeQueue().getTotalChangeCount();
+            int loaded = 0;
+            for (ChunkPos cp : region.getChunks()) {
+                if (level.hasChunk(cp.x, cp.z)) {
+                    loaded++;
+                }
+            }
+            int finalLoaded = loaded;
             source.sendSuccess(() -> Component.literal(
                     String.format("Simulation region: center=(%d, %d), radius=%d, chunks=%d",
                             region.getCenter().x, region.getCenter().z,
                             region.getRadius(), region.getChunkCount())
             ), false);
+            source.sendSuccess(() -> Component.literal(
+                    String.format("  Currently loaded: %d | Cached (unloaded): %d | Pending changes: %d",
+                            finalLoaded, cached, pending)
+            ), false);
+            if (finalLoaded > 0 && cached == 0) {
+                source.sendSuccess(() -> Component.literal(
+                        "  Note: Chunks near spawn stay loaded. Try a region farther from spawn."
+                ), false);
+            }
         }
 
         return 1;

@@ -1,8 +1,11 @@
 package com.evans.simulationmod.simulation;
 
+import com.evans.simulationmod.cache.ChunkCacheManager;
+import com.evans.simulationmod.cache.PendingChangeQueue;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -15,9 +18,13 @@ public class SimulationManager extends SavedData {
 
     @Nullable
     private SimulationRegion region;
+    private final ChunkCacheManager chunkCacheManager;
+    private final PendingChangeQueue pendingChangeQueue;
 
     public SimulationManager() {
         this.region = null;
+        this.chunkCacheManager = new ChunkCacheManager();
+        this.pendingChangeQueue = new PendingChangeQueue();
     }
 
     public static SimulationManager get(ServerLevel level) {
@@ -56,7 +63,22 @@ public class SimulationManager extends SavedData {
         return region;
     }
 
-    public boolean isInSimulationRegion(net.minecraft.world.level.ChunkPos pos) {
+    public boolean isInSimulationRegion(ChunkPos pos) {
         return region != null && region.contains(pos);
+    }
+
+    /**
+     * Returns true if the chunk is in the simulation region AND currently cached (unloaded).
+     */
+    public boolean isSimulated(ChunkPos pos) {
+        return isInSimulationRegion(pos) && chunkCacheManager.hasChunk(pos);
+    }
+
+    public ChunkCacheManager getChunkCacheManager() {
+        return chunkCacheManager;
+    }
+
+    public PendingChangeQueue getPendingChangeQueue() {
+        return pendingChangeQueue;
     }
 }

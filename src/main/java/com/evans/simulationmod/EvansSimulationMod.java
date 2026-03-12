@@ -14,9 +14,11 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 import com.evans.simulationmod.cache.CacheTestCommand;
+import com.evans.simulationmod.simulation.ChunkLifecycleHandler;
 import com.evans.simulationmod.simulation.SimulationCommands;
 
 @Mod(EvansSimulationMod.MOD_ID)
@@ -39,6 +41,16 @@ public class EvansSimulationMod {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         LOGGER.info("Evans Simulation Mod server starting!");
+    }
+
+    @SubscribeEvent
+    public void onChunkUnload(ChunkEvent.Unload event) {
+        ChunkLifecycleHandler.onChunkUnload(event);
+    }
+
+    @SubscribeEvent
+    public void onChunkLoad(ChunkEvent.Load event) {
+        ChunkLifecycleHandler.onChunkLoad(event);
     }
 
     @SubscribeEvent
